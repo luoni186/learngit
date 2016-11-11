@@ -1,0 +1,37 @@
+package com.aisino.aitss.utils;
+
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.x509.X509CertificateStructure;
+
+/**
+ * @author Du Yue Kun
+ * 
+ */
+public class CertificateUtil {
+
+    public static X509CertificateStructure getX509CertificateStructure(
+            String cert) {
+        X509CertificateStructure x509Cert = null;
+        ASN1InputStream in = null;
+
+        try {
+            in = new ASN1InputStream(Base64.decode(cert));
+            x509Cert = new X509CertificateStructure((ASN1Sequence) in
+                    .readObject());
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return x509Cert;
+    }
+
+}

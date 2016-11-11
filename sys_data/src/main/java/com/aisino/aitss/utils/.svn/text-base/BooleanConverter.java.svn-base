@@ -1,0 +1,29 @@
+package com.aisino.aitss.utils;
+
+/**
+ * @author Du Yue Kun
+ * 
+ */
+public class BooleanConverter {
+
+    public static int boolean2Int(boolean b) {
+        int i = 0;
+
+        if (b) {
+            i = 1;
+        }
+
+        return i;
+    }
+
+    public static boolean int2Boolean(int i) {
+        boolean b = false;
+
+        if (i == 1) {
+            b = true;
+        }
+
+        return b;
+    }
+
+}

@@ -1,0 +1,189 @@
+package com.aisino.aitss.utils;
+
+import java.math.BigInteger;
+
+import org.bouncycastle.asn1.ASN1OctetString;
+import org.bouncycastle.asn1.ASN1Set;
+import org.bouncycastle.asn1.DERBoolean;
+import org.bouncycastle.asn1.DERGeneralizedTime;
+import org.bouncycastle.asn1.DERInteger;
+import org.bouncycastle.asn1.DERObjectIdentifier;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERSet;
+import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.cmp.PKIFreeText;
+import org.bouncycastle.asn1.cmp.PKIStatus;
+import org.bouncycastle.asn1.cmp.PKIStatusInfo;
+import org.bouncycastle.asn1.cms.ContentInfo;
+import org.bouncycastle.asn1.cms.IssuerAndSerialNumber;
+import org.bouncycastle.asn1.cms.SignedData;
+import org.bouncycastle.asn1.cms.SignerIdentifier;
+import org.bouncycastle.asn1.cms.SignerInfo;
+import org.bouncycastle.asn1.tsp.Accuracy;
+import org.bouncycastle.asn1.tsp.MessageImprint;
+import org.bouncycastle.asn1.tsp.TSTInfo;
+import org.bouncycastle.asn1.tsp.TimeStampResp;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x509.X509Name;
+
+import com.aisino.aitss.constant.Constants;
+import com.aisino.aitss.db.entity.TssTsdata;
+import com.aisino.aitss.db.entity.TssTsdataArc;
+
+/**
+ * @author Du Yue Kun
+ * 
+ */
+public class TimeStampConverter {
+
+    public static TimeStampResp tsdata2TimeStampResp(TssTsdata data,
+            String certDn, String certificate) {
+        TimeStampResp timeStampResp = null;
+
+        // 构造TSTInfo
+        DERObjectIdentifier tsaPolicyId = new DERObjectIdentifier(OIDConverter
+                .Name2OID(data.getSignAlg()));
+        AlgorithmIdentifier hashAlgorithm = new AlgorithmIdentifier(
+                OIDConverter.Name2OID(data.getHashAlg()));
+        byte[] hashedMessage = Base64.decode(data.getHashMeg());
+        MessageImprint messageImprint = new MessageImprint(hashAlgorithm,
+                hashedMessage);
+        DERInteger serialNumber = new DERInteger(new BigInteger(data
+                .getSerialNum()));
+        DERGeneralizedTime genTime = new DERGeneralizedTime(data.getGenTime());
+        Accuracy accuracy = new Accuracy(new DERInteger(data.getAccSeconds()),
+                new DERInteger(data.getAccMillis()), new DERInteger(data
+                        .getAccMicros()));
+        DERBoolean ordering = new DERBoolean(BooleanConverter.int2Boolean(data
+                .getOrdering()));
+        DERInteger nonce = new DERInteger(data.getNonce());
+        GeneralName tsa = null;
+
+        if (certDn != null) {
+            tsa = new GeneralName(new X509Name(certDn));
+        }
+
+        X509Extensions extensions = null;
+        TSTInfo tstInfo = new TSTInfo(tsaPolicyId, messageImprint,
+                serialNumber, genTime, accuracy, ordering, nonce, tsa,
+                extensions);
+
+        // 构造SignedData中的ContentInfo
+        ContentInfo signedDataContentInfo = new ContentInfo(
+                new DERObjectIdentifier(Constants.TST_INFO_OID), tstInfo);
+
+        // 构造SignedData
+        ASN1Set digestAlgorithms = new DERSet(hashAlgorithm);
+        ASN1Set certificates = null;
+
+        if (certificate != null) {
+            certificates = new DERSet(CertificateUtil
+                    .getX509CertificateStructure(certificate));
+        }
+
+        ASN1Set crls = null;
+        SignerIdentifier sid = new SignerIdentifier(new IssuerAndSerialNumber(
+                new X509Name(certDn), serialNumber));
+        AlgorithmIdentifier digAlgorithm = hashAlgorithm;
+        ASN1Set authenticatedAttributes = null;
+        AlgorithmIdentifier digEncryptionAlgorithm = new AlgorithmIdentifier(
+                tsaPolicyId);
+        ASN1OctetString encryptedDigest = new DEROctetString(Base64.decode(data
+                .getSignature()));
+        ASN1Set unauthenticatedAttributes = null;
+        SignerInfo signerInfo = new SignerInfo(sid, digAlgorithm,
+                authenticatedAttributes, digEncryptionAlgorithm,
+                encryptedDigest, unauthenticatedAttributes);
+        ASN1Set signerInfos = new DERSet(signerInfo);
+        SignedData signedData = new SignedData(digestAlgorithms,
+                signedDataContentInfo, certificates, crls, signerInfos);
+
+        // 构造TimeStampToken中的ContentInfo
+        ContentInfo timeStampToken = new ContentInfo(new DERObjectIdentifier(
+                Constants.SIGNED_DATA_OID), signedData);
+
+        // 构造TimeStampResp
+        PKIStatusInfo pkiStatusInfo = new PKIStatusInfo(PKIStatus.GRANTED,
+                new PKIFreeText(new DERUTF8String("")), null);
+        timeStampResp = new TimeStampResp(pkiStatusInfo, timeStampToken);
+
+        return timeStampResp;
+    }
+
+    public static TimeStampResp tsdataArc2TimeStampResp(TssTsdataArc data,
+            String certDn, String certificate) {
+        TimeStampResp timeStampResp = null;
+
+        // 构造TSTInfo
+        DERObjectIdentifier tsaPolicyId = new DERObjectIdentifier(OIDConverter
+                .Name2OID(data.getSignAlg()));
+        AlgorithmIdentifier hashAlgorithm = new AlgorithmIdentifier(
+                OIDConverter.Name2OID(data.getHashAlg()));
+        byte[] hashedMessage = Base64.decode(data.getHashMsg());
+        MessageImprint messageImprint = new MessageImprint(hashAlgorithm,
+                hashedMessage);
+        DERInteger serialNumber = new DERInteger(new BigInteger(data
+                .getSerialNum()));
+        DERGeneralizedTime genTime = new DERGeneralizedTime(data.getGenTime());
+        Accuracy accuracy = new Accuracy(new DERInteger(data.getAccSeconds()),
+                new DERInteger(data.getAccMillis()), new DERInteger(data
+                        .getAccMicros()));
+        DERBoolean ordering = new DERBoolean(BooleanConverter.int2Boolean(data
+                .getOrdering()));
+        DERInteger nonce = new DERInteger(data.getNonce());
+        GeneralName tsa = null;
+
+        if (certDn != null) {
+            tsa = new GeneralName(new X509Name(certDn));
+        }
+
+        X509Extensions extensions = null;
+        TSTInfo tstInfo = new TSTInfo(tsaPolicyId, messageImprint,
+                serialNumber, genTime, accuracy, ordering, nonce, tsa,
+                extensions);
+
+        // 构造SignedData中的ContentInfo
+        ContentInfo signedDataContentInfo = new ContentInfo(
+                new DERObjectIdentifier(Constants.TST_INFO_OID), tstInfo);
+
+        // 构造SignedData
+        ASN1Set digestAlgorithms = new DERSet(hashAlgorithm);
+        ASN1Set certificates = null;
+
+        if (certificate != null) {
+            certificates = new DERSet(CertificateUtil
+                    .getX509CertificateStructure(certificate));
+        }
+
+        ASN1Set crls = null;
+        SignerIdentifier sid = new SignerIdentifier(new IssuerAndSerialNumber(
+                new X509Name(certDn), serialNumber));
+        AlgorithmIdentifier digAlgorithm = hashAlgorithm;
+        ASN1Set authenticatedAttributes = null;
+        AlgorithmIdentifier digEncryptionAlgorithm = new AlgorithmIdentifier(
+                tsaPolicyId);
+        ASN1OctetString encryptedDigest = new DEROctetString(Base64.decode(data
+                .getSignature()));
+        ASN1Set unauthenticatedAttributes = null;
+        SignerInfo signerInfo = new SignerInfo(sid, digAlgorithm,
+                authenticatedAttributes, digEncryptionAlgorithm,
+                encryptedDigest, unauthenticatedAttributes);
+        ASN1Set signerInfos = new DERSet(signerInfo);
+        SignedData signedData = new SignedData(digestAlgorithms,
+                signedDataContentInfo, certificates, crls, signerInfos);
+
+        // 构造TimeStampToken中的ContentInfo
+        ContentInfo timeStampToken = new ContentInfo(new DERObjectIdentifier(
+                Constants.SIGNED_DATA_OID), signedData);
+
+        // 构造TimeStampResp
+        PKIStatusInfo pkiStatusInfo = new PKIStatusInfo(PKIStatus.GRANTED,
+                new PKIFreeText(new DERUTF8String("")), null);
+        timeStampResp = new TimeStampResp(pkiStatusInfo, timeStampToken);
+
+        return timeStampResp;
+    }
+
+}

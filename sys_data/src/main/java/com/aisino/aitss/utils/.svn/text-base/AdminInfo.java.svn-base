@@ -1,0 +1,50 @@
+package com.aisino.aitss.utils;
+
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpSession;
+
+import com.aisino.authentication.AdminUserInfo;
+
+/**
+ * 管理员信息类
+ * @author cdf
+ * @version 1.0
+ */
+public class AdminInfo {
+
+	/**
+	 * 管理员信息实例
+	 */
+	private static AdminUserInfo adminInfo;
+
+	/**
+	 * 从session中取得管理员信息
+	 * @return 管理员信息实例
+	 */
+	public static AdminUserInfo getAdminInfo() {
+		
+	
+		if (adminInfo == null ) {
+			adminInfo = new AdminUserInfo();
+			FacesContext context = FacesContext.getCurrentInstance();
+			ExternalContext ec = context.getExternalContext();
+			HttpSession session = (HttpSession) ec.getSession(true);
+			adminInfo = (AdminUserInfo) session.getAttribute("adminInfo");
+			System.out.println("after getAttribute:"+adminInfo.getCertId());
+		}else {
+			
+			//@admininfo
+			FacesContext context = FacesContext.getCurrentInstance();
+		    ExternalContext ec = context.getExternalContext();
+		    HttpSession session = (HttpSession) ec.getSession(true);
+			if(adminInfo.equals((AdminUserInfo) session.getAttribute("adminInfo"))==false)
+			{
+				adminInfo = new AdminUserInfo();
+				adminInfo=(AdminUserInfo) session.getAttribute("adminInfo");
+			}
+		}
+		return adminInfo;
+	}
+
+}

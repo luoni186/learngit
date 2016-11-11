@@ -1,0 +1,103 @@
+package com.aisino.aitss.utils;
+
+import java.util.regex.Pattern;
+
+
+public class NetMaskUtil {
+
+    public static String netMaskToPrefix(String netMask)
+    {
+        String ip[]=netMask.split("\\.");
+        
+        int prefix=0;
+        int temp=0;
+        for (int i = 0; i < ip.length; i++) {
+            
+            if (ip[i].equalsIgnoreCase("255")) {
+                prefix+=8;
+            }else {
+                temp=Integer.parseInt(ip[i]);
+                while (true) {
+
+                    
+                    temp=temp>>1;
+                    if (temp%2!=0) {
+                        prefix+=1;
+                    }
+                 
+                    if (temp==0) {
+                        break;
+                    }
+                   
+                }
+            }
+            
+           
+        }
+        return String.valueOf(prefix);
+    }
+    
+    
+    public static String prefixToNetMask(String prefix)
+    {
+        
+        int numOfOne=Integer.valueOf(prefix);
+        
+        int count=numOfOne/8;
+        StringBuilder sBuilder=new StringBuilder();
+        
+        for (int i = 0; i < count; i++) {
+            
+            sBuilder.append("255.");
+        }
+        
+        int step=numOfOne%8;
+        int sumtemp=0;
+        for (int j = 0; j <step ; j++) {
+            
+            sumtemp+=1<<(8-1-j);
+        }
+        
+        sBuilder.append(String.valueOf(sumtemp));
+        
+        if (count==0) {
+            
+            sBuilder.append(".0.0.0");
+        }
+        
+        if (count==1) {
+            
+            sBuilder.append(".0.0");
+        }
+        
+        if (count==2) {
+            sBuilder.append(".0");
+        }
+        if (count==4) {
+            
+            return sBuilder.substring(0,sBuilder.length()-2);
+        }
+        
+        return sBuilder.toString();
+    }
+    
+    
+    public static String validateNetMask(String netMask)
+    {
+        String regex="^(255|254|252|248|240|224|192|128|0)\\.0\\.0\\.0$|^(255\\.(254|252|248|240|224|192|128|0)\\.0\\.0)$|^(255\\.255\\.(254|252|248|240|224|192|128|0)\\.0)$|^(255\\.255\\.255\\.(254|252|248|240|224|192|128|0))$";
+        
+        boolean isMatches=netMask.matches(regex);
+        
+        if (!isMatches) {
+            return "子网掩码输入不正确，请重新输入";
+        }
+        return "输入正确";
+    }
+    public static void main(String[] args) {
+        
+//        String prefix="3";
+//        System.out.println(prefixToNetMask(prefix));
+        
+        System.out.println(validateNetMask("255.255.255.254"));
+    }
+}

@@ -1,0 +1,51 @@
+package com.aisino.aitss.utils;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.aisino.aitss.constant.Constants;
+
+/**
+ * @author Du Yue Kun
+ * 
+ */
+public class OIDConverter {
+
+    private static Map<String, String> OID2Name;
+    private static Map<String, String> name2OID;
+
+    static {
+        OID2Name = new HashMap<String, String>();
+        OID2Name.put(Constants.MD5_OID, Constants.MD5_NAME);
+        OID2Name.put(Constants.SHA1_OID, Constants.SHA1_NAME);
+        OID2Name.put(Constants.RSA_OID, Constants.RSA_NAME);
+        OID2Name.put(Constants.SM2_OID, Constants.SM2_NAME);
+        OID2Name.put(Constants.SM3_OID, Constants.SM3_NAME);
+        OID2Name.put(Constants.SHA1_WITH_RSA_SIGNATURE_OID,
+                Constants.SHA1_WITH_RSA_SIGNATURE_NAME);
+        OID2Name.put(Constants.SM3_WITH_SM2_SIGNATURE_OID,
+                Constants.SM3_WITH_SM2_SIGNATURE_NAME);
+
+        name2OID = new HashMap<String, String>();
+        name2OID.put(Constants.MD5_NAME, Constants.MD5_OID);
+        name2OID.put(Constants.SHA1_NAME, Constants.SHA1_OID);
+        name2OID.put(Constants.RSA_NAME, Constants.RSA_OID);
+        name2OID.put(Constants.SM2_NAME, Constants.SM2_OID);
+        name2OID.put(Constants.SM3_NAME, Constants.SM3_OID);
+        name2OID.put(Constants.SHA1_WITH_RSA_SIGNATURE_NAME,
+                Constants.SHA1_WITH_RSA_SIGNATURE_OID);
+        name2OID.put(Constants.SM3_WITH_SM2_SIGNATURE_NAME,
+                Constants.SM3_WITH_SM2_SIGNATURE_OID);
+    }
+
+    public static String OID2Name(String OID) {
+        String name = OID2Name.get(OID);
+        return name;
+    }
+
+    public static String Name2OID(String name) {
+        String OID = name2OID.get(name);
+        return OID;
+    }
+
+}
